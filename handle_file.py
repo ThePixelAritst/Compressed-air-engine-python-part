@@ -13,5 +13,3 @@ class File_handling():
     def save_to_file(self,text):
         self.data_file.write(f"{text}\n")
         self.data_file.flush()
-
-file = File_handling()

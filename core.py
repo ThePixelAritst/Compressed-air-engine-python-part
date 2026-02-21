@@ -1,14 +1,20 @@
 import socket
 import keyboard
-import matplotlib.pyplot as plt
-from handle_file import file
-from matplotlib.ticker import AutoMinorLocator, MultipleLocator
-import numpy as np
+from handle_file import File_handling
+from plot_graph import graph
 # setup of the connection
+
+draw_only = input("If you want to read from file instead, type (yes): ")
+if draw_only == "yes":
+    graph.read_file_content()
+    graph.draw_graph()
+    exit()
+# user chose not to read from file
+
+file = File_handling()
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
@@ -87,20 +93,3 @@ file.save_to_file(f"{[len(time_array),len(rpm_array),rotation_number]}")
 file.save_to_file(time_array)
 file.save_to_file(rpm_array)
 #file.save_to_file(rotation_count_array)
-
-
-#create graph
-
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax2.set_ylabel("Revolution count")
-ax1.set_title("RPM based on time")
-ax1.set_xlabel("Time")
-ax1.set_ylabel("RPM")
-#ax1.yaxis.set_major_locator(MultipleLocator(1000))
-#ax1.xaxis.set_major_locator(MultipleLocator(1))
-#ax2.yaxis.set_major_locator(MultipleLocator(50))
-
-ax1.plot(time_array,rpm_array)
-#ax2.plot(time_array,rotation_count_array)
-plt.show()
