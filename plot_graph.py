@@ -23,8 +23,6 @@ class Graphing():
                 Exception("Incorrect file, cannot draw graph")
             self.x = ast.literal_eval(separated_datafile[1])
             self.y = ast.literal_eval(separated_datafile[2])
-            print(self.x)
-            print(self.y)
 
     def set_from_data(self,set_x,set_y):
         self.x = set_x
