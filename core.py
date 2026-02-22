@@ -2,17 +2,9 @@ import socket
 import keyboard
 from handle_file import File_handling
 from plot_graph import graph
-import msvcrt
-import time
+from keyboard_controller import timeout_action
 
 
-# setup of the connection
-UDP_IP = "0.0.0.0"
-UDP_PORT = 5005
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((UDP_IP, UDP_PORT))
-sock.settimeout(2)
 
 # operational variables
 
@@ -22,6 +14,7 @@ time_index = 0
 rotation_number = 1 # 1 because when a signal arrives it means it already completed a rotation
 receive_attempt_count = 0
 stop_flag = False
+
 
 # functions for all
 def detect_interrupt(event): #detects key press during the listening phase
@@ -49,20 +42,6 @@ def save_time(time_data): #saves the current time signature into an array, which
     time_index +=1
     return current_period
 
-def clear_msvcrt_buffer():
-    while msvcrt.kbhit():
-        msvcrt.getch()
-
-def timeout_action(timeout=5):
-    stop_time = time.monotonic() + timeout 
-    while True:
-        clear_msvcrt_buffer()
-        time.sleep(0.01)
-        if msvcrt.kbhit():
-            clear_msvcrt_buffer() # initially I didnt have this line, but my logic was that if I read it will "reset". Didnt change anything tho
-            return True
-        elif time.monotonic() > stop_time: return False
-
 def draw_only_initiation(): # the option to not initiate the program and only draw the graph from existing data directory
     print("Press any key to interrupt startup\n")
     if timeout_action(3.5):
@@ -77,7 +56,19 @@ def file_rename_prompt():
 
 draw_only_initiation()
 
+
+
+
+
+
 print("Startup initiated")
+
+# setup of the connection
+UDP_IP = "0.0.0.0"
+UDP_PORT = 5005
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((UDP_IP, UDP_PORT))
+sock.settimeout(2)
 
 # main loop, here it loops until an interrupt is detected
 file = File_handling() # initiation of the file system
@@ -108,7 +99,6 @@ keyboard.unhook_all()
 file.save_to_file(f"{[len(time_array),len(rpm_array)]}")
 file.save_to_file(time_array)
 file.save_to_file(rpm_array)
-#file.save_to_file(rotation_count_array)
 file.close_file()
 
 file.fetch_file_name()
