@@ -2,7 +2,7 @@ from pathlib import Path
 import time
 import os
 
-
+MAX_WATCHDOG = 5
 
 class File_handling():
     def __init__(self):
@@ -29,7 +29,15 @@ class File_handling():
         
     def rename_file(self): #closes the file automatically just in case
         self.close_file()
-        chosen_file_name = input("Input chosen name (without extensions):\n").strip("./,")
+        watchdog = 0
+        while True:
+            chosen_file_name = input("Input chosen name (without extensions):\n").strip("./,")
+            if not chosen_file_name:
+                print(f"Invalid file name. Watchdog: {watchdog}/{MAX_WATCHDOG}")
+                watchdog += 1
+            elif watchdog >= MAX_WATCHDOG:
+                exit("Watchdog exceeded")     
+            else: break   
         new_name = os.path.join(self.base_directory,"data",f"{chosen_file_name}.txt")
         os.rename(self.data_path, new_name)
         self.data_path = new_name

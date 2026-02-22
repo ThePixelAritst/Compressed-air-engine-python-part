@@ -59,8 +59,6 @@ draw_only_initiation()
 
 
 
-
-
 print("Startup initiated")
 
 # setup of the connection

@@ -1,5 +1,6 @@
 import sys
 import time
+
 Windows_check = None
 if (sys.platform).startswith("win"):
     Windows_check = True
@@ -10,6 +11,7 @@ else:
     import termios
     import tty
 
+EEP_TIME = 0.01
 
 
 if not Windows_check:
@@ -35,20 +37,30 @@ if Windows_check:
 
     def timeout_action(timeout=5):
         stop_time = time.monotonic() + timeout 
+        clear_keyboard_buffer()
         while True:
-         clear_keyboard_buffer()
-         time.sleep(0.01)
+         time.sleep(EEP_TIME)
          if msvcrt.kbhit():
              clear_keyboard_buffer() # initially I didnt have this line, but my logic was that if I read it will "reset". Didnt change anything tho
              return True
          elif time.monotonic() > stop_time: return False
     
 else:
+    def detect_keystroke():
+        stdin, _, _ = select.select([sys.stdin],[],[],0)
+        stdin_bool = bool(stdin)
+        return stdin_bool
+
     def clear_keyboard_buffer():
-        while not clear:
-            clear, _, _ = select.select([sys.stdin],[],[],0)
-            clear= bool(clear)
+        while detect_keystroke():
             sys.stdin.read(1)
 
     def timeout_action(timeout=5):
-        pass
+        stop_time = time.monotonic() + timeout
+        clear_keyboard_buffer()
+        while True:
+            time.sleep(EEP_TIME)
+            if detect_keystroke():
+                clear_keyboard_buffer()
+                return True
+            elif time.monotonic() > stop_time: return False

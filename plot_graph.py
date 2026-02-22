@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import ast
 import os
 
+MAX_WATCHDOG = 5
+
 class Graphing():
     def __init__(self):
         self.fig, self.ax1 = plt.subplots()
@@ -13,15 +15,21 @@ class Graphing():
 
     def set_from_file(self):
         readable = False
+        watchdog = 0
         while readable == False:
             try:
                 file_path = input("Please insert full path to file:\n").strip()
                 datafile = open(file_path,"r")
                 readable = datafile.readable()
             except:
-                print("File at specified directory does not exist")
+                print(f"File at specified directory does not exist. Watchdog: {watchdog}/{MAX_WATCHDOG}")
+                if watchdog >= MAX_WATCHDOG:
+                    exit("Watchdog exceeded")
+                watchdog += 1
+            if not readable:
+                print("Unreadable file")
+                watchdog += 1
                 continue
-            if not readable: print("Unreadable file")
             separated_datafile = datafile.readlines()
             processed_check = ast.literal_eval(separated_datafile[0]) #converts the mess of a string into a list with ints 
             if processed_check[0] != processed_check[1]:
