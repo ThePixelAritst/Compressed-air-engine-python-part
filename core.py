@@ -1,8 +1,7 @@
 import socket
-import keyboard
 from handle_file import File_handling
 from plot_graph import graph
-from keyboard_controller import timeout_action
+from keyboard_controller import timeout_action,detect_keystroke,clear_keyboard_buffer
 
 
 
@@ -17,10 +16,6 @@ stop_flag = False
 
 
 # functions for all
-def detect_interrupt(event): #detects key press during the listening phase
-    global stop_flag
-    if event.event_type == keyboard.KEY_DOWN:
-        stop_flag = True
 
 def save_rpm(time_data): #saves the current rpm into an array, which it expands
     time_since_last_rev = float(time_data[1])
@@ -69,10 +64,13 @@ sock.bind((UDP_IP, UDP_PORT))
 sock.settimeout(2)
 
 # main loop, here it loops until an interrupt is detected
-file = File_handling() # initiation of the file system
-keyboard.hook(detect_interrupt) # starts the listening for any key press
+file = File_handling() # initiation of the file system # starts the listening for any key press
 print("Listening...")
+clear_keyboard_buffer()
 while not stop_flag:
+    if detect_keystroke():
+        clear_keyboard_buffer()
+        break
     try: #if the connection times out, this block will be skipped
         data = sock.recv(1024) # receives information from motoras list, where [n of finished revolution, time period of the last revolution in microsec (10**-6)]
         if not data: exit("Connection closed by peer")
@@ -88,10 +86,9 @@ while not stop_flag:
         receive_attempt_count +=1
         continue
 
+
 print("Listening stop")
 print(f"{len(time_array)} total points")
-
-keyboard.unhook_all()
 
 #save data
 file.save_to_file(f"{[len(time_array),len(rpm_array)]}")

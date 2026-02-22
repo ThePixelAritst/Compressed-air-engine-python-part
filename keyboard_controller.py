@@ -31,6 +31,12 @@ else:
 
 
 if Windows_check:
+    def detect_keystroke():
+        if msvcrt.kbhit():
+            return True
+        else:
+            return False
+
     def clear_keyboard_buffer():
         while msvcrt.kbhit():
             msvcrt.getch()
