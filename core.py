@@ -2,18 +2,9 @@ import socket
 import keyboard
 from handle_file import File_handling
 from plot_graph import graph
+import msvcrt
+import time
 
-# the option to not initiate the program and only draw the graph from existing data directory
-draw_only = input("If you want to read from file instead, type (yes): ")
-if draw_only == "yes":
-    graph.read_file_content()
-    graph.draw_graph()
-    exit()
-# user chose not to read from file
-
-print("Initiation started")
-
-file = File_handling() # initiation of the file system
 
 # setup of the connection
 UDP_IP = "0.0.0.0"
@@ -28,7 +19,7 @@ sock.settimeout(2)
 rpm_array = [0]
 time_array = [0]
 time_index = 0
-rotation_number = 0
+rotation_number = 1 # 1 because when a signal arrives it means it already completed a rotation
 receive_attempt_count = 0
 stop_flag = False
 
@@ -58,19 +49,47 @@ def save_time(time_data): #saves the current time signature into an array, which
     time_index +=1
     return current_period
 
-# main loop, here it loops until an interrupt is detected
+def clear_msvcrt_buffer():
+    while msvcrt.kbhit():
+        msvcrt.getch()
 
+def timeout_action(timeout=5):
+    stop_time = time.monotonic() + timeout 
+    while True:
+        clear_msvcrt_buffer()
+        time.sleep(0.01)
+        if msvcrt.kbhit():
+            clear_msvcrt_buffer() # initially I didnt have this line, but my logic was that if I read it will "reset". Didnt change anything tho
+            return True
+        elif time.monotonic() > stop_time: return False
+
+def draw_only_initiation(): # the option to not initiate the program and only draw the graph from existing data directory
+    print("Press any key to interrupt startup\n")
+    if timeout_action(3.5):
+        graph.set_from_file()
+        graph.draw_graph()
+        exit()
+
+def file_rename_prompt():
+    print("Press any key to rename newly created file\n")
+    if timeout_action(3):
+        file.rename_file()
+
+draw_only_initiation()
+
+print("Startup initiated")
+
+# main loop, here it loops until an interrupt is detected
+file = File_handling() # initiation of the file system
 keyboard.hook(detect_interrupt) # starts the listening for any key press
 print("Listening...")
-while True:
-    if (stop_flag==True):
-        print("stopping listening")
-        break
-    try:
-        data = sock.recv(1024)
+while not stop_flag:
+    try: #if the connection times out, this block will be skipped
+        data = sock.recv(1024) # receives information from motoras list, where [n of finished revolution, time period of the last revolution in microsec (10**-6)]
         if not data: exit("Connection closed by peer")
         receive_attempt_count = 0
         fetched_packet = (data.decode()).split()
+        print(f"Motor: {fetched_packet[0]}, Python: {rotation_number}")
         rotation_number +=1
         current_rpm = save_rpm(fetched_packet)
         current_time = save_time(fetched_packet)
@@ -80,16 +99,20 @@ while True:
         receive_attempt_count +=1
         continue
 
+print("Listening stop")
+print(f"{len(time_array)} total points")
+
 keyboard.unhook_all()
-#rotation_count_array = np.linspace(0,rotation_number,rotation_number)
-
-
-#print data to console
-print(f"{rpm_array}\n\n{time_array}")
-print(f"{len(rpm_array)}; {len(time_array)}")
 
 #save data
-file.save_to_file(f"{[len(time_array),len(rpm_array),rotation_number]}")
+file.save_to_file(f"{[len(time_array),len(rpm_array)]}")
 file.save_to_file(time_array)
 file.save_to_file(rpm_array)
 #file.save_to_file(rotation_count_array)
+file.close_file()
+
+file.fetch_file_name()
+file_rename_prompt()
+
+graph.set_from_data(time_array,rpm_array,file.fetch_file_name())
+graph.draw_graph()
