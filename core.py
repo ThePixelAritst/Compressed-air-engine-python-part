@@ -4,7 +4,6 @@ from plot_graph import graph
 from keyboard_controller import timeout_action,detect_keystroke,clear_keyboard_buffer
 
 
-
 # operational variables
 
 rpm_array = [0]
