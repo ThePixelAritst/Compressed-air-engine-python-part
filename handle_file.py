@@ -1,16 +1,24 @@
 from pathlib import Path
 import time
 import os
+import ast
 
 MAX_WATCHDOG = 5
 
 class File_handling():
     def __init__(self):
-        self.date = time.strftime("%Y-%m-%d--%a--%H-%M-%S") #creates a date in the following form: "YYYY-MM-DD--Name of day--HH-MinMin-SS"
-        self.base_directory = Path(__file__).resolve().parent
-        self.data_path = os.path.join(self.base_directory,"data",f"{self.date}.txt") #self.base_directory / "data" / self.date + ".txt"
-        self.data_file = open(self.data_path,"a")
-        self.file_name = self.date
+        self.file_open = False
+
+    def inititiate_file(self):
+        if not self.file_open:
+            self.date = time.strftime("%Y-%m-%d--%a--%H-%M-%S") #creates a date in the following form: "YYYY-MM-DD--Name of day--HH-MinMin-SS"
+            self.base_directory = Path(__file__).resolve().parent
+            self.data_path = os.path.join(self.base_directory,"data",f"{self.date}.txt") #self.base_directory / "data" / self.date + ".txt"
+            self.data_file = open(self.data_path,"a")
+            self.file_name = self.date
+            self.file_open = True
+        else:
+            raise Exception("File already open!")
 
     def save_to_file(self,text):
         self.data_file.write(f"{text}\n")
@@ -21,6 +29,7 @@ class File_handling():
     
     def close_file(self):
         self.data_file.close()
+        self.file_open = False
 
     def fetch_file_name(self):
         self.file_name = (os.path.basename(self.data_path).split("."))[0]
@@ -41,3 +50,30 @@ class File_handling():
         new_name = os.path.join(self.base_directory,"data",f"{chosen_file_name}.txt")
         os.rename(self.data_path, new_name)
         self.data_path = new_name
+
+    def open_and_separate(self):
+        readable = False
+        watchdog = 0
+        while True:
+            try:
+                file_path = input("Please insert full path to file:\n").strip()
+                datafile = open(file_path,"r")
+                readable = datafile.readable()
+                if not readable:
+                    print(f"Unreadable file. Watchdog: {watchdog}/{MAX_WATCHDOG}")
+                    watchdog += 1
+                    continue
+                else:
+                    break
+            except:
+                print(f"File at specified directory does not exist. Watchdog: {watchdog}/{MAX_WATCHDOG}")
+                if watchdog >= MAX_WATCHDOG:
+                    exit("Watchdog exceeded")
+                watchdog += 1
+        separated_datafile = datafile.readlines()
+        processed_check = ast.literal_eval(separated_datafile[0]) #converts the mess of a string into a list with ints 
+        if processed_check[0] != processed_check[1]:
+            Exception("Count does not match. Cannot draw graph")
+        return file_path, separated_datafile
+
+file = File_handling()

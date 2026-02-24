@@ -1,5 +1,5 @@
 import socket
-from handle_file import File_handling
+from handle_file import file
 from plot_graph import graph
 from keyboard_controller import timeout_action,detect_keystroke,clear_keyboard_buffer
 
@@ -12,6 +12,11 @@ time_index = 0
 rotation_number = 1 # 1 because when a signal arrives it means it already completed a rotation
 receive_attempt_count = 0
 stop_flag = False
+
+# operational constants
+
+UDP_IP = "0.0.0.0"
+UDP_PORT = 5005
 
 
 # functions for all
@@ -48,24 +53,23 @@ def file_rename_prompt():
     if timeout_action(3):
         file.rename_file()
 
-draw_only_initiation()
+draw_only_initiation() # Asks the user if they want to only plot-graph
 
 
+# Initiation protocol - boots up 
 
+print("Initiation")
 
-print("Startup initiated")
-
-# setup of the connection
-UDP_IP = "0.0.0.0"
-UDP_PORT = 5005
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
 sock.settimeout(2)
 
-# main loop, here it loops until an interrupt is detected
-file = File_handling() # initiation of the file system # starts the listening for any key press
-print("Listening...")
 clear_keyboard_buffer()
+file.inititiate_file()
+
+# Main loop keeps listening for any incoming packets from the motor, 
+
+print("Listening...")
 while not stop_flag:
     if detect_keystroke():
         clear_keyboard_buffer()
@@ -86,7 +90,7 @@ while not stop_flag:
         continue
 
 
-print("Listening stop")
+print("Listening stopped")
 print(f"{len(time_array)} total points")
 
 #save data

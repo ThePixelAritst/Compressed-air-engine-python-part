@@ -2,7 +2,7 @@ import sys
 import time
 
 Windows_check = None
-if (sys.platform).startswith("win"):
+if sys.platform.startswith("win"):
     Windows_check = True
     import msvcrt
 else:
