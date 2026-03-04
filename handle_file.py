@@ -60,13 +60,11 @@ class File_handling():
                 datafile = open(file_path,"r")
                 readable = datafile.readable()
                 if not readable:
-                    print(f"Unreadable file. Watchdog: {watchdog}/{MAX_WATCHDOG}")
-                    watchdog += 1
-                    continue
+                    raise Exception(f"Unreadable file. Watchdog: {watchdog}/{MAX_WATCHDOG}")
                 else:
                     break
             except:
-                print(f"File at specified directory does not exist. Watchdog: {watchdog}/{MAX_WATCHDOG}")
+                print(f"File at specified directory does not exist or is not readable. Watchdog: {watchdog}/{MAX_WATCHDOG}")
                 if watchdog >= MAX_WATCHDOG:
                     exit("Watchdog exceeded")
                 watchdog += 1

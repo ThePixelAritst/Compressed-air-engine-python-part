@@ -41,6 +41,41 @@ def save_time(time_data): #saves the current time signature into an array, which
     time_index +=1
     return current_period
 
+def set_start_stop(is_stop):
+    x_intersect = 0
+    x1 = time_array[-2]
+    x2 = time_array[-1]
+    y1 = rpm_array[-2]
+    y2 = rpm_array[-1]
+
+    if y1 != y2: #if y1 = y2, division with 0 would be attempted. Unlikely, but neccessary
+        x_intersect = ((y1-y2) + (x2-x1))/(y1-y2)
+    elif is_stop:
+        x_intersect = x2
+    else:
+        x_intersect = x1 
+
+    if is_stop: #if the calculation was for the stop, the point can be added to the end of the graph
+        time_array.append(x_intersect)
+        rpm_array.append(0)
+    else: #since this was a start, and a 2 points already exist before this was created, it needs to be added before these points
+        time_array.insert(len(time_array)-3,x_intersect)
+        rpm_array.insert(len(rpm_array)-3,0)
+    
+def calculate_horizontal_intersect(y_level=0):
+    x1 = time_array[len(time_array-2)]
+    x2 = time_array[len(time_array-1)]
+    y1 = rpm_array[len(rpm_array-2)]
+    y2 = rpm_array[len(rpm_array-1)]
+
+    if y1 != y2:
+        x_intersect = ((x1-x2)*y_level+(y1-y2)*x1+(x2-x1)*y1)/(y1-y2)
+    else:
+        raise Exception("Undefined intersect")
+    
+    return x_intersect
+
+
 def draw_only_initiation(): # the option to not initiate the program and only draw the graph from existing data directory
     print("Press any key to interrupt startup\n")
     if timeout_action(3.5):
@@ -77,15 +112,21 @@ while not stop_flag:
     try: #if the connection times out, this block will be skipped
         data = sock.recv(1024) # receives information from motoras list, where [n of finished revolution, time period of the last revolution in microsec (10**-6)]
         if not data: exit("Connection closed by peer")
-        receive_attempt_count = 0
         fetched_packet = (data.decode()).split()
         print(f"Motor: {fetched_packet[0]}, Python: {rotation_number}")
         rotation_number +=1
         current_rpm = save_rpm(fetched_packet)
         current_time = save_time(fetched_packet)
+        if receive_attempt_count > 0:
+            set_start_stop(False)
+        if fetched_packet:
+            pass
         print(f"Current RPM: {current_rpm}, completed revolutions: {rotation_number}, at time: {current_time}")
+        receive_attempt_count = 0
     except:
         print(f"unsuccessful receive attempt: {receive_attempt_count}")
+        if receive_attempt_count == 0 and len(time_array) > 5:
+            set_start_stop(True)
         receive_attempt_count +=1
         continue
 
