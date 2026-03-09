@@ -18,6 +18,10 @@ stop_flag = False
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
 
+# Animation settings
+ANIMATE = True
+FRAME_RATE = 12
+
 
 # functions for all
 
@@ -75,12 +79,17 @@ def calculate_horizontal_intersect(y_level=0):
     
     return x_intersect
 
+def choose_animation():
+    if not ANIMATE:
+        graph.draw_static()
+    else:
+        graph.animate(FRAME_RATE)
 
 def draw_only_initiation(): # the option to not initiate the program and only draw the graph from existing data directory
     print("Press any key to interrupt startup\n")
     if timeout_action(3.5):
         graph.set_from_file()
-        graph.draw_graph()
+        choose_animation()
         exit()
 
 def file_rename_prompt():
@@ -144,4 +153,5 @@ file.fetch_file_name()
 file_rename_prompt()
 
 graph.set_from_data(time_array,rpm_array,file.fetch_file_name())
-graph.draw_graph()
+
+choose_animation()
