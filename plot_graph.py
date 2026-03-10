@@ -5,14 +5,18 @@ from matplotlib.ticker import AutoMinorLocator
 import math
 import ast
 import os
+from pathlib import Path
 from handle_file import file
 import numpy as np
+import imageio_ffmpeg
 
 # Purely technical
 MAX_WATCHDOG = 5 # maximum number of attempts for file input
+COLLUMN_NUMBER = 10
+GRAPH_COLLUMNS = 7
 
 # Crucial setup
-SAVE_FIG = False # EXPERIMENTAL, DOES NOT WORK PROPERLY
+SAVE_FIG = True # Saves the generated graph to file
 SIZE_X = 22 # canvas size, width
 SIZE_Y = 10 # canvas size, height
 
@@ -34,8 +38,12 @@ AX1_LINE = 2.5 # linewidth of the main (rpm) line
 
 class Graphing():
     def __init__(self):
-        self.fig = plt.figure(num="Main Figure",figsize=[SIZE_X,SIZE_Y])
-        self.ax1 = self.fig.add_subplot()
+        plt.rcParams["animation.ffmpeg_path"] = imageio_ffmpeg.get_ffmpeg_exe()
+        self.fig = plt.figure(num="Main Figure",figsize=[SIZE_X,SIZE_Y],layout="constrained")
+        if STAT_TEXT:
+            self.ax1 = self.fig.add_subplot(1,COLLUMN_NUMBER,(1,GRAPH_COLLUMNS))
+        else:
+            self.ax1 = self.fig.add_subplot()
         self.ax2 = self.ax1.twinx()
         self.x_ax1=[]
         self.main = []
@@ -65,6 +73,23 @@ class Graphing():
         self.x_points = len(self.x_ax1)
         self.x_max = max(self.x_ax1)
 
+    def save_plotted_graph(self,save_name,animated,format=None,animated_writer="ffmpeg"):
+        base_directory = Path(__file__).resolve().parent
+        if animated:
+            if not format:
+                format = "mp4"
+            print("Saving animated figure")
+            data_path = os.path.join(base_directory,"graphs","animated",f"{save_name}.{format}")
+            self.ani.save(data_path,writer=animated_writer)
+        else:
+            if not format:
+                format = "png"
+            print("Saving static figure")
+            data_path = os.path.join(base_directory,"graphs","static",f"{save_name}.{format}")
+            plt.savefig(data_path)
+
+
+
 
     def calculate_derivation(self):
         pointer = 0
@@ -72,6 +97,11 @@ class Graphing():
         derivation_edge = [0,0]
         self.y_ax2=[]
         while pointer < len(self.y_ax1):
+            if (self.y_ax1[pointer] or self.y_ax1[pointer-1]) == np.nan:
+                self.y_ax2.append(np.nan)
+                pointer += 1
+                continue
+
             raw_derivation = self.y_ax1[pointer]-self.y_ax1[pointer-1]
             if self.x_ax1[pointer]-self.x_ax1[pointer-1] != 0:
                 interval_coeficient = 1/(self.x_ax1[pointer]-self.x_ax1[pointer-1])
@@ -115,23 +145,28 @@ class Graphing():
         self.ax2.set_ybound(0,len(self.y_ax1)+len(self.y_ax1)/10)
         self.secondary_label = "Rev count"
         self.ax2_stat = f"Rev. Count: {len(self.y_ax2)}"
-    
-    def show_sine(self): # very experimental, does not work as of now
-        self.y_ax2 = np.sin(self.x_ax1)
-        self.ax2.set_ylabel("Sine of x",size=LABEL_SIZE)
-        self.ax2.set_ybound(0,len(self.y_ax1)+len(self.y_ax1)/10)
-        self.secondary_label = "Sine"
 
-    def generate_stat_text(self):
+
+
+    def set_stat_subplot(self):
+        self.ax_text = self.fig.add_subplot(1,COLLUMN_NUMBER,(GRAPH_COLLUMNS+1,COLLUMN_NUMBER))
+        self.ax_text.set_title("Statistics",fontsize=TITLE_SIZE)
+        self.ax_text.axis("off")
+
+
+
+    def display_stat_text(self):
+        self.set_stat_subplot()
         acceleration_limit = "None"
         if LIMIT_ACCELERATION:
             acceleration_limit = MAX_ACCELERATION
-        self.ax1.text( # cool stats display
-                (self.x_ax1[-1])*(0.885),
-                max(self.y_ax1)*(0.78),
-                f"Max Speed: {max(self.y_ax1)} RPM\n{self.ax2_stat}\nRuntime: {self.float_run_time} s\nPoints: {self.x_points}\nCutoff: {acceleration_limit}",
+        self.full_stat_text = f"Max Speed: {max(self.y_ax1)} RPM\nAvg. Speed: {round(sum(self.y_ax1)/self.x_points,1)} RPM\n{self.ax2_stat}\nRuntime: {self.float_run_time} s\nCutoff: {acceleration_limit}\nPoints: {self.x_points}"
+        self.statistics = self.ax_text.text( # cool and useful stats display
+                (0.1),
+                (0),
+                self.full_stat_text,
                 bbox={"facecolor": "white","pad": 3.5},
-                fontsize=LABEL_SIZE
+                fontsize=TITLE_SIZE*0.8
             )
         
     def set_common(self):
@@ -192,8 +227,6 @@ class Graphing():
         print("generating static graph")
         
         self.set_common()
-        
-        print(self.x_ax1)
 
         #plot lines
         self.plot_secondary(self.x_ax1,self.y_ax2)
@@ -211,9 +244,11 @@ class Graphing():
         #self.ax1.vlines((self.x_ax1[-1]/2), ymin=0, ymax=max(self.y_ax1), color="red") #for debug only, shows line in the middle of the time
 
         if STAT_TEXT:
-            self.generate_stat_text()
+            self.display_stat_text()
 
         print("Generation of static graph successful")
+        if SAVE_FIG:
+            self.save_plotted_graph(self.run_name,False)
         plt.show()
 
 
@@ -225,12 +260,15 @@ class Graphing():
         return(self.main,self.secondary)
     
     def update_frame(self,frame_number):
-        # main line update
-        self.main.set_data(self.x_ax1[:frame_number],self.y_ax1[:frame_number])
         # secondary line update
         self.secondary.set_data(self.x_ax1[:frame_number],self.y_ax2[:frame_number])
+        # main line update
+        self.main.set_data(self.x_ax1[:frame_number],self.y_ax1[:frame_number])
+        # set text
+        #self.debug_text.set_text(f"Frame: {frame_number}\nFrame count: {len(self.x_ax1)}")
+        self.statistics.set_text(f"Cur. Speed: {self.y_ax1[frame_number-1]} RPM\nCur. Accl.: {self.y_ax2[frame_number-1]} RPM/s\n{self.full_stat_text}\nCur. Frame: {frame_number}")
         print(frame_number)
-        return(self.main,self.secondary)
+        return(self.main,self.secondary,self.statistics)
 
     def animate(self,frame_rate):
         print("Generating animation")
@@ -262,8 +300,10 @@ class Graphing():
         self.ax2.hlines(y=0,xmin=0,xmax=self.x_ax1[-1],linestyles="dashed",color=AX2_COLOR)
         #self.ax1.vlines((self.x_ax1[-1]/2), ymin=0, ymax=max(self.y_ax1), color="red") #for debug only, shows line in the middle of the time
         
-
         self.display_legend()
+
+        if STAT_TEXT:
+            self.display_stat_text()
 
         self.ani = anim.FuncAnimation(
             self.fig,
@@ -271,9 +311,10 @@ class Graphing():
             init_func=self.initiate_animation,
             blit=True,
             frames= len(self.x_ax1),
-            interval= 1000 / frame_rate
+            interval= 1000*(self.float_run_time)/(len(self.x_ax1))
         )
-        self.ani.save(f"{self.run_name}.gif",writer="pillow")
+        if SAVE_FIG:
+            self.save_plotted_graph(self.run_name,True)
         print("finished")
         plt.show()
     

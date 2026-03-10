@@ -2,16 +2,18 @@ import socket
 from handle_file import file
 from plot_graph import graph
 from keyboard_controller import timeout_action,detect_keystroke,clear_keyboard_buffer
+import numpy as np
 
 
 # operational variables
 
-rpm_array = [0]
-time_array = [0]
-time_index = 0
+rpm_array = []
+time_array = []
+time_pointer = 0
 rotation_number = 1 # 1 because when a signal arrives it means it already completed a rotation
 receive_attempt_count = 0
 stop_flag = False
+detected_stop = False
 
 # operational constants
 
@@ -19,65 +21,36 @@ UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
 
 # Animation settings
-ANIMATE = True
+ANIMATE = False
 FRAME_RATE = 12
+
+# Engine estimates
+MAX_RPM_ESTIMATE = 2500
+MIN_RPM_ESTIMATE = 150
 
 
 # functions for all
 
+def fetch_period_time(packet,rounding=3):
+    fetched_period = round(float(packet[1])*10**-6,rounding)
+    return(fetched_period) # returns the period time of the most recent period, expressed in seconds with (variable) number of decimal places
+
 def save_rpm(time_data): #saves the current rpm into an array, which it expands
-    time_since_last_rev = float(time_data[1])
-    revs = round((60*10**6/time_since_last_rev),1)
+    revs = round((60/fetch_period_time(time_data)),1)
     rpm_array.append(revs)
     return revs
 
 def save_time(time_data): #saves the current time signature into an array, which it expands
-    fetched_period = float(time_data[1])*10**-6
-    global time_index
-    last_period = time_array[time_index]
-    print(time_index)
-    if time_index == 0:
+    global time_pointer
+    last_period = time_array[time_pointer]
+    print(time_pointer)
+    if time_pointer == 0:
         current_period = 0
     else:    
-        current_period = fetched_period + last_period
-    current_period = round(current_period,3)
+        current_period = fetch_period_time(time_data,3) + last_period
     time_array.append(current_period)
-    time_index +=1
+    time_pointer +=1
     return current_period
-
-def set_start_stop(is_stop):
-    x_intersect = 0
-    x1 = time_array[-2]
-    x2 = time_array[-1]
-    y1 = rpm_array[-2]
-    y2 = rpm_array[-1]
-
-    if y1 != y2: #if y1 = y2, division with 0 would be attempted. Unlikely, but neccessary
-        x_intersect = ((y1-y2) + (x2-x1))/(y1-y2)
-    elif is_stop:
-        x_intersect = x2
-    else:
-        x_intersect = x1 
-
-    if is_stop: #if the calculation was for the stop, the point can be added to the end of the graph
-        time_array.append(x_intersect)
-        rpm_array.append(0)
-    else: #since this was a start, and a 2 points already exist before this was created, it needs to be added before these points
-        time_array.insert(len(time_array)-3,x_intersect)
-        rpm_array.insert(len(rpm_array)-3,0)
-    
-def calculate_horizontal_intersect(y_level=0):
-    x1 = time_array[len(time_array-2)]
-    x2 = time_array[len(time_array-1)]
-    y1 = rpm_array[len(rpm_array-2)]
-    y2 = rpm_array[len(rpm_array-1)]
-
-    if y1 != y2:
-        x_intersect = ((x1-x2)*y_level+(y1-y2)*x1+(x2-x1)*y1)/(y1-y2)
-    else:
-        raise Exception("Undefined intersect")
-    
-    return x_intersect
 
 def choose_animation():
     if not ANIMATE:
@@ -124,18 +97,16 @@ while not stop_flag:
         fetched_packet = (data.decode()).split()
         print(f"Motor: {fetched_packet[0]}, Python: {rotation_number}")
         rotation_number +=1
+        time_delta = time_array[-1] - fetch_period_time(fetched_packet)
+        if time_delta > 60 / MIN_RPM_ESTIMATE:
+            current_rpm = save_rpm(fetched_packet)
+            current_time = save_time(fetched_packet)
         current_rpm = save_rpm(fetched_packet)
         current_time = save_time(fetched_packet)
-        if receive_attempt_count > 0:
-            set_start_stop(False)
-        if fetched_packet:
-            pass
         print(f"Current RPM: {current_rpm}, completed revolutions: {rotation_number}, at time: {current_time}")
         receive_attempt_count = 0
     except:
         print(f"unsuccessful receive attempt: {receive_attempt_count}")
-        if receive_attempt_count == 0 and len(time_array) > 5:
-            set_start_stop(True)
         receive_attempt_count +=1
         continue
 
