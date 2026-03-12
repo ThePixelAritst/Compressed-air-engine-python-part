@@ -31,25 +31,24 @@ MIN_RPM_ESTIMATE = 150
 
 # functions for all
 
-def fetch_period_time(packet,rounding=3):
-    fetched_period = round(float(packet[1])*10**-6,rounding)
-    return(fetched_period) # returns the period time of the most recent period, expressed in seconds with (variable) number of decimal places
-
 def save_rpm(time_data): #saves the current rpm into an array, which it expands
-    revs = round((60/fetch_period_time(time_data)),1)
+    time_since_last_rev = float(time_data[1])
+    revs = round((60*10**6/time_since_last_rev),1)
     rpm_array.append(revs)
     return revs
 
 def save_time(time_data): #saves the current time signature into an array, which it expands
-    global time_pointer
-    last_period = time_array[time_pointer]
-    print(time_pointer)
-    if time_pointer == 0:
+    fetched_period = float(time_data[1])*10**-6
+    global time_index
+    last_period = time_array[time_index]
+    print(time_index)
+    if time_index == 0:
         current_period = 0
     else:    
-        current_period = fetch_period_time(time_data,3) + last_period
+        current_period = fetched_period + last_period
+    current_period = round(current_period,3)
     time_array.append(current_period)
-    time_pointer +=1
+    time_index +=1
     return current_period
 
 def choose_animation():
@@ -97,10 +96,10 @@ while not stop_flag:
         fetched_packet = (data.decode()).split()
         print(f"Motor: {fetched_packet[0]}, Python: {rotation_number}")
         rotation_number +=1
-        time_delta = time_array[-1] - fetch_period_time(fetched_packet)
-        if time_delta > 60 / MIN_RPM_ESTIMATE:
-            current_rpm = save_rpm(fetched_packet)
-            current_time = save_time(fetched_packet)
+        #time_delta = time_array[-1] - (fetched_packet)
+        #if time_delta > 60 / MIN_RPM_ESTIMATE:
+            #current_rpm = save_rpm(fetched_packet)
+            #current_time = save_time(fetched_packet)
         current_rpm = save_rpm(fetched_packet)
         current_time = save_time(fetched_packet)
         print(f"Current RPM: {current_rpm}, completed revolutions: {rotation_number}, at time: {current_time}")
