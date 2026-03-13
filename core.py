@@ -8,7 +8,7 @@ from receive_data import data_receive
 class Main_control():
     def __init__(self):
         self.GENERATE_GRAPH = True
-        self.ANIMATE = False
+        self.ANIMATE = True
         self.FRAME_RATE = 12
 
     def choose_animation(self):
