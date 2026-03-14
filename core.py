@@ -56,5 +56,5 @@ main.file_rename_prompt()
 
 # Plots the data
 if main.GENERATE_GRAPH:
-    graph.set_from_data(data_output[0],data_output[1],file.fetch_file_name())
+    graph.set_from_data([len(data_output[0]),len(data_output[1])],data_output[0],data_output[1],file.fetch_file_name())
     main.choose_animation()

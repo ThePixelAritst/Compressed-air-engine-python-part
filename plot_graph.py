@@ -54,6 +54,7 @@ class Graphing():
         self.secondary_label = ""
         self.main_label = "Rotational speed [RPM]"
         self.ax2_stat = ""
+        self.axis_length = []
     
     def verify_data(self):
         if self.axis_length[0] != self.axis_length[1]:
@@ -67,11 +68,11 @@ class Graphing():
         self.y_ax1 = ast.literal_eval(returned_data[2]) #Y axis data
         self.run_name = os.path.basename(file_path).split(".")[0] #converts the filepath to only show the name of the file to be displayed
 
-    def set_from_data(self,set_x,set_y,name="Not Set"):
-        self.axis_length[len(self.x_ax1),len(self.y_ax2)]
+    def set_from_data(set_length,self,set_x,set_y,name="Not Set"):
         #self.verify_data()
-        self.x_ax1 = set_x
-        self.y_ax1 = set_y
+        self.x_ax1 = [set_x]
+        self.y_ax1 = [set_y]
+        self.axis_length = set_length
         self.run_name = name
 
     def basic_data_read(self):

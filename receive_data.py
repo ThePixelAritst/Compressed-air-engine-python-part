@@ -26,10 +26,10 @@ class Data_calculations():
 
     def get_rpm(self,position,precision=0,ignore_set_data = False, full_packet=None): #calculates the speed of the engine based on provided data. Input only one period, 
         if not ignore_set_data:
-            selected_packet = self.get_period_time(position,10)
+            selected_packet = self.get_period_time(position,5)
         else:
-            selected_packet = self.get_period_time(position,10,ignore_set_data=True,full_packet=full_packet)
-        rpm = round(60/float(selected_packet),precision)
+            selected_packet = self.get_period_time(position,5,ignore_set_data=True,full_packet=full_packet)
+        rpm = round(60/selected_packet,precision)
         return rpm
     
     def increase_total_runtime(self,position,set_data=False,full_packet=None):
@@ -78,9 +78,11 @@ class Data_calculations():
         self.compile_rpm_list()
         self.compile_runtime_list()
         #self.find_missing_points()
+        print(self.list_runtime)
+        print(self.list_rpm)
 
     def get_all_compiled(self):
-        return [self.list_runtime,self.list_rpm,self.missing_point_list,self.raw_input_data]
+        return [self.list_runtime,self.list_rpm,self.missing_point_list]
 
 data_calculate = Data_calculations()
 
@@ -142,7 +144,6 @@ class Data_Input():
         
     def output(self):
         data_calculate.compile_data(self.raw_data)
-        data_send_out = data_calculate.get_all_compiled()
-        return data_send_out#.append(self.raw_data) #[time_list,rpm_list, missing point list - [internal,engine], raw_data - [revolution,micros from last]]
+        return data_calculate.get_all_compiled()#.append(self.raw_data) #[time_list,rpm_list, missing point list - [internal,engine], raw_data - [revolution,micros from last]]
 
 data_receive = Data_Input()
