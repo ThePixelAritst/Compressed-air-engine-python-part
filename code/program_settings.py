@@ -1,0 +1,33 @@
+class data_collection():
+    pass
+class graphing_settings():
+    # Basic settings
+    GENERATE_GRAPH = False
+    SAVE_FIG = False # Saves the generated graph to file
+    ANIMATE = False
+
+    # Technical settings
+    MAX_WATCHDOG = 5 # maximum number of attempts for file input
+            # ratio of data / stat_text, if enabled
+    COLLUMN_NUMBER = 10
+    GRAPH_COLLUMNS = 7
+            # resolution of canvas
+    SIZE_X = 22 # canvas size, width
+    SIZE_Y = 10 # canvas size, height
+    
+    # data filter and form settings
+    LIMIT_ACCELERATION = True # turns on MAX_ACCELERATION limit, if False will display all calculated values
+    ACCELERATION_LOG10 = False # displays acceleration in symlog scale
+    MAX_ACCELERATION = 1500 #maximum acceleration that will still be displayed, no data lost
+    STAT_TEXT = True # info board with some useful and cool stats
+
+    # Graphical settings
+    TITLE_SIZE = 28
+    LABEL_SIZE = 12 # basically everything not a title uses this
+    AX1_COLOR = "black" # color of main (rpm) line
+    AX2_COLOR = "#237fd4" # color of secondary line
+    AX1_LINE = 2.5 # linewidth of the main (rpm) line
+
+    # Animation settings
+    FRAME_RATE = 12
+    

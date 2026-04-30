@@ -82,7 +82,7 @@ class Data_calculations():
         print(self.list_rpm)
 
     def get_all_compiled(self):
-        return [self.list_runtime,self.list_rpm,self.missing_point_list]
+        return [self.list_runtime,self.list_rpm,self]
 
 data_calculate = Data_calculations()
 

@@ -12,7 +12,7 @@ class File_handling():
     def inititiate_file(self):
         if not self.file_open:
             self.date = time.strftime("%Y-%m-%d--%a--%H-%M-%S") #creates a date in the following form: "YYYY-MM-DD--Name of day--HH-MinMin-SS"
-            self.base_directory = Path(__file__).resolve().parent
+            self.base_directory = Path(__file__).resolve().parents[1]
             self.data_path = os.path.join(self.base_directory,"data",f"{self.date}.txt") #self.base_directory / "data" / self.date + ".txt"
             self.data_file = open(self.data_path,"a")
             self.file_name = self.date

@@ -1,21 +1,17 @@
 from handle_file import file
 from plot_graph import graph
-from keyboard_controller import timeout_action,detect_keystroke,clear_keyboard_buffer
+from keyboard_controller import timeout_action
 from receive_data import data_receive
+from program_settings import graphing_settings as gs
 
 # Setup of the main functions:
 
 class Main_control():
-    def __init__(self):
-        self.GENERATE_GRAPH = True
-        self.ANIMATE = True
-        self.FRAME_RATE = 12
-
     def choose_animation(self):
-        if not self.ANIMATE:
+        if not gs.ANIMATE:
             graph.draw_static()
         else:
-            graph.animate(self.FRAME_RATE)
+            graph.animate(gs.FRAME_RATE)
 
     def draw_only_initiation(self): # the option to not initiate the program and only draw the graph from existing data directory
         print("Press any key to interrupt startup\n")
@@ -55,6 +51,6 @@ file.fetch_file_name()
 main.file_rename_prompt()
 
 # Plots the data
-if main.GENERATE_GRAPH:
+if gs.GENERATE_GRAPH:
     graph.set_from_data([len(data_output[0]),len(data_output[1])],data_output[0],data_output[1],file.fetch_file_name())
     main.choose_animation()
