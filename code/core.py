@@ -1,4 +1,5 @@
-from handle_file import file
+from handle_file import file_handler
+file = file_handler()
 from plot_graph import graph
 from keyboard_controller import timeout_action
 from receive_data import data_receive

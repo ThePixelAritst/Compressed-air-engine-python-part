@@ -5,9 +5,10 @@ import ast
 
 MAX_WATCHDOG = 5
 
-class File_handling():
+class file_handler():
     def __init__(self):
         self.file_open = False
+
 
     def inititiate_file(self):
         if not self.file_open:
@@ -73,5 +74,3 @@ class File_handling():
         if processed_check[0] != processed_check[1]:
             Exception("Count does not match. Cannot draw graph")
         return file_path, separated_datafile
-
-file = File_handling()

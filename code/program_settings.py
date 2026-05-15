@@ -1,5 +1,12 @@
-class data_collection():
-    pass
+class general_settings():
+    MAX_WATCHDOG = 5
+
+class data_settings():
+    DEFAULT_FORMAT = "txt"
+    DEBUG_MODE = True
+    DEBUG_DIRECTORY = "/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory"
+
+    
 class graphing_settings():
     # Basic settings
     GENERATE_GRAPH = False
