@@ -9,7 +9,6 @@ class Data():
     def __init__(self,opened_file,format):
         if opened_file is None or opened_file.closed:
             raise ValueError(f"Expected an open file object, got: {opened_file!r}")
-        else: print("File Open in parent")
         self.file = opened_file
         self.format = format
 
@@ -30,7 +29,7 @@ class File(Data):
         self.format = format
         self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.{self.format}")
         self.file = open(self.full_path,"a")
-        print("File object")
+
 
     def close_file(self):
         self.file.close()
@@ -51,16 +50,23 @@ class File(Data):
         else:
             attempt = 0
             while attempt < genset.MAX_WATCHDOG:
-                unconfirmed_path = input("Please input file to be opened")
-                if Path.exists(unconfirmed_path) and Path.is_file(unconfirmed_path):
-                    self.full_path = unconfirmed_path
-                    print("Path valid")
-                    break
-                else:
+                try:
+                    unconfirmed_path = input("Please input file to be opened:\n")
+                    if not( Path(unconfirmed_path).exists() and Path(unconfirmed_path).is_file()):
+                        raise ValueError()
+                    else:
+                        self.full_path = unconfirmed_path
+                        print("Path valid")
+                        break
+                except Exception:
                     attempt += 1
-                    print(f"Path to file is invalid or cannot be opened. Attempt {attempt}/{genset.MAX_WATCHDOG}")
-            
-        self.format = os.path.basename(self.full_path).split(-1).split(".")   
+                    print(f"\nInvalid or unreadable file. Attempt {attempt}/{genset.MAX_WATCHDOG}")
+                finally:
+                    if attempt >= genset.MAX_WATCHDOG:
+                        exit("Watchdog exceeded, terminating program")
+                          
+        self.format = (os.path.basename(self.full_path).split()[-1]).split(".")
+        #self.file_name =    
         self.folder_directory = Path(self.full_path).resolve().parent
         self.file = open(self.full_path)
             
@@ -73,8 +79,10 @@ class File(Data):
             self.create_file(format)
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
+        #print(f"File {self.file_name} initiated successfully")
         super().__init__(self.file,format=format)
 
 
-test_file = File(open_file=False)
-test_file.file_write("test")
+open_file = File(open_file=True)
+print(open_file.format)
+open_file.file_write("test_from_call")
